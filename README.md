@@ -18,10 +18,10 @@ structure-only IEC 61508-3 skeleton is in `standards/`.
 ## Install
 
 ```
-pip install reqthread
+pip install git+https://github.com/eggheadengineer/reqthread
 ```
 
-Python 3.10 or later. Two dependencies: PyYAML and jsonschema.
+Python 3.10 or later. Two dependencies: PyYAML and jsonschema. A PyPI release (`pip install reqthread`) is coming.
 
 ## Quick start
 
@@ -79,7 +79,7 @@ GoogleTest `TEST`, Unity `test_*`, and pytest tests are recognised.
       runs-on: ubuntu-latest
       steps:
         - uses: actions/checkout@v7
-        - uses: eggheadengineer/reqthread/ci/github@v0.1.0
+        - uses: eggheadengineer/reqthread/ci/github@main   # pin a release tag once v0.1.0 is out
           with:
             config: reqthread.yaml
   ```
