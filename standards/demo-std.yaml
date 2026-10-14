@@ -1,0 +1,55 @@
+# DEMO-STD — a FICTIONAL standard used only to exercise every field of the
+# standard-data format in tests. Nothing here is taken from any real standard.
+
+data_format: "0.1.0"
+
+standard:
+  id: DEMO-STD
+  title: "Fictional demonstration standard"
+  edition: "1"
+  publisher: "nobody"
+
+licensee: "test fixture"
+
+integrity_levels:
+  - { id: L1, name: "Level 1", order: 1 }
+  - { id: L2, name: "Level 2", order: 2 }
+  - { id: L3, name: "Level 3", order: 3 }
+
+recommendation_scale:
+  - { code: MUST, meaning: "Required", unused_requires_justification: true }
+  - { code: SHOULD, meaning: "Advised", unused_requires_justification: false }
+  - { code: MAY, meaning: "Optional", unused_requires_justification: false }
+
+package_sections:
+  - { id: "01_plan", title: "Plan" }
+  - { id: "02_requirements", title: "Requirements" }
+  - { id: "03_tests", title: "Tests" }
+
+test_levels:
+  - { id: unit, name: "Unit" }
+  - { id: system, name: "System" }
+
+tool_classes:
+  - { id: C0, name: "Harmless", requires_evidence: false }
+  - { id: C1, name: "Can hide defects", requires_evidence: true }
+
+preexisting_routes:
+  - { id: R1, name: "Reviewed" }
+
+techniques:
+  - id: DEMO-T1
+    group: "Design"
+    name: "Fictional design technique"
+    section: "02_requirements"
+    levels: { L1: MAY, L2: SHOULD, L3: MUST }
+  - id: DEMO-T2
+    group: "Testing"
+    name: "Fictional testing technique"
+    section: "03_tests"
+    levels: { L1: SHOULD, L2: MUST, L3: MUST }
+
+coverage_expectations:
+  - { integrity_level: L2, metric: statement, target_percent: 90, strength: SHOULD }
+  - { integrity_level: L3, metric: statement, target_percent: 100, strength: MUST }
+  - { integrity_level: L3, metric: branch, target_percent: 100, strength: MUST }

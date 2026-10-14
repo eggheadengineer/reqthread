@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:evidence-bundle:schema:deviations-file:0.1.0",
+  "title": "Deviation register",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["key", "match", "justification", "approved_by", "approved_at", "expires_at"],
+    "additionalProperties": false,
+    "properties": {
+      "key": { "type": "string", "pattern": "^[A-Z][A-Z0-9]*-[A-Z0-9][A-Z0-9._-]*$" },
+      "match": {
+        "type": "object",
+        "description": "Which findings this deviation covers. Omitted fields match anything; at least tool and rule are required.",
+        "required": ["tool", "rule"],
+        "additionalProperties": false,
+        "properties": {
+          "tool": { "type": "string" },
+          "rule": { "type": "string" },
+          "path": { "type": "string" },
+          "line": { "type": "integer", "minimum": 1 },
+          "fingerprint": { "type": "string" }
+        }
+      },
+      "justification": { "type": "string", "minLength": 1 },
+      "scope": { "type": "string" },
+      "approved_by": { "type": "string", "description": "Person id from the config, without the person: prefix." },
+      "approved_at": { "type": "string", "format": "date-time" },
+      "expires_at": { "type": ["string", "null"], "format": "date" }
+    }
+  }
+}

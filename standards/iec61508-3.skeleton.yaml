@@ -1,0 +1,68 @@
+# IEC 61508-3 standard-data SKELETON.
+#
+# Structure only. Contains no technique recommendations and no coverage
+# expectations — those must be transcribed by the licensee from their own copy
+# of the standard. Clause references are [verify] against the IEC webstore
+# table-of-contents preview before use.
+
+data_format: "0.1.0"
+
+standard:
+  id: IEC61508-3
+  title: "Functional safety of E/E/PE safety-related systems — Part 3: Software requirements"
+  edition: "2.0 (2010)"
+  publisher: IEC
+
+licensee: "REPLACE with the organisation holding a licensed copy"
+
+integrity_levels:
+  - { id: SIL1, name: "SIL 1", order: 1 }
+  - { id: SIL2, name: "SIL 2", order: 2 }
+  - { id: SIL3, name: "SIL 3", order: 3 }
+  - { id: SIL4, name: "SIL 4", order: 4 }
+
+recommendation_scale:
+  - { code: HR, meaning: "Highly recommended", unused_requires_justification: true }
+  - { code: R, meaning: "Recommended", unused_requires_justification: false }
+  - { code: "-", meaning: "No recommendation for or against", unused_requires_justification: false }
+  - { code: NR, meaning: "Not recommended", unused_requires_justification: false }
+
+package_sections:
+  - { id: "01_management", title: "Functional safety management", clauses: ["61508-1 6", "61508-3 6"] }
+  - { id: "02_software_safety_requirements", title: "Software safety requirements specification", clauses: ["7.2"] }
+  - { id: "03_validation_plan", title: "Validation plan for software aspects", clauses: ["7.3"] }
+  - { id: "04_architecture", title: "Software architecture", clauses: ["7.4.3"] }
+  - { id: "05_detailed_design", title: "Detailed design", clauses: ["7.4.5"] }
+  - { id: "06_code", title: "Code implementation", clauses: ["7.4.6"] }
+  - { id: "07_module_testing", title: "Module testing", clauses: ["7.4.7"] }
+  - { id: "08_integration_testing", title: "Integration testing", clauses: ["7.4.8"] }
+  - { id: "09_pe_integration", title: "Programmable electronics integration", clauses: ["7.5"] }
+  - { id: "10_validation", title: "Software aspects of system safety validation", clauses: ["7.7"] }
+  - { id: "11_verification", title: "Software verification", clauses: ["7.9"] }
+  - { id: "12_traceability", title: "Traceability", clauses: ["7.x"] }
+  - { id: "13_modification", title: "Modification", clauses: ["7.6", "7.8"] }
+  - { id: "14_tools", title: "Support tools", clauses: ["7.4.4"] }
+  - { id: "15_preexisting_software", title: "Pre-existing software elements", clauses: ["7.4.2.12"] }
+  - { id: "16_techniques", title: "Technique selection and justification", clauses: ["Annex A", "Annex B"] }
+
+test_levels:
+  - { id: module, name: "Module testing" }
+  - { id: integration, name: "Integration testing" }
+  - { id: pe_integration, name: "PE (hardware/software) integration testing" }
+  - { id: validation, name: "Validation" }
+
+tool_classes:
+  - { id: T1, name: "No output contributing to executable code", requires_evidence: false }
+  - { id: T2, name: "Supports test or verification", requires_evidence: true }
+  - { id: T3, name: "Output contributes to executable code", requires_evidence: true }
+
+preexisting_routes:
+  - { id: "1S", name: "Compliant development" }
+  - { id: "2S", name: "Proven in use" }
+  - { id: "3S", name: "Assessment of non-compliant development" }
+
+# Transcribe from your licensed copy of Annexes A and B.
+techniques: []
+
+# Transcribe from your licensed copy of the dynamic analysis technique table.
+coverage_expectations: []

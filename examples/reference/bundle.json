@@ -1,0 +1,133 @@
+{
+  "bundle_format": "0.1.0",
+  "generator": { "name": "hand-written-example", "version": "0.0.0" },
+  "created_at": "2026-10-13T18:00:00Z",
+  "project": {
+    "id": "wb55-black-channel",
+    "name": "WB55 black-channel safety link (reference project)",
+    "integrity_claim": "SIL3",
+    "standard": {
+      "id": "IEC61508-3",
+      "edition": "2.0 (2010)",
+      "data_hash": "sha256:9e6dac48b3c9a96a72495b4a4e0848a7dbee1f0b3bb8a11d3e9b29df9f7e8181"
+    }
+  },
+  "baseline": {
+    "id": "BL-2026-10-13",
+    "commit": "e1a5f0c0ffee0000000000000000000000000001",
+    "tag": "baseline/2026-10-13",
+    "previous_bundle_hash": null
+  },
+
+  "entities": [
+    { "id": "person:jwatson", "kind": "person", "name": "James Watson", "roles": ["firmware_lead", "author"], "competence_record": null },
+    { "id": "person:reviewer-a", "kind": "person", "name": "Example Reviewer", "roles": ["safety_reviewer"], "competence_record": null },
+
+    {
+      "id": "req:SYS-004", "kind": "requirement", "key": "SYS-004",
+      "level": "system", "type": "integrity", "integrity_level": "SIL3",
+      "title": "Safe state on loss of operator link",
+      "text": "The machine shall reach its safe state if the operator's wireless stop device stops communicating.",
+      "verification": ["analysis"], "test_levels": [], "status": "approved",
+      "source": { "path": "requirements/SYS-004.req.md" }
+    },
+    {
+      "id": "req:SSR-001", "kind": "requirement", "key": "SSR-001",
+      "level": "software", "type": "integrity", "integrity_level": "SIL3",
+      "title": "Heartbeat supervision timeout",
+      "text": "The receiver shall de-energise the machine-enable output within 300 ms of the last valid heartbeat frame.",
+      "rationale": "300 ms tolerates two consecutive lost frames at a 10 Hz heartbeat while staying inside the machine's stopping-distance budget.",
+      "verification": ["test"], "test_levels": ["module", "pe_integration"], "status": "approved",
+      "source": { "path": "requirements/SSR-001.req.md" }
+    },
+    {
+      "id": "req:SSR-002", "kind": "requirement", "key": "SSR-002",
+      "level": "software", "type": "functional", "integrity_level": "SIL3",
+      "title": "Reject unauthenticated frames",
+      "text": "The receiver shall discard any frame whose authentication tag does not verify, and shall not treat it as a valid heartbeat.",
+      "verification": ["test"], "test_levels": ["module"], "status": "approved",
+      "source": { "path": "requirements/SSR-002.req.md" }
+    },
+    {
+      "id": "req:SSR-003", "kind": "requirement", "key": "SSR-003",
+      "level": "software", "type": "functional", "integrity_level": "SIL3",
+      "title": "Reject replayed and out-of-order frames",
+      "text": "The receiver shall discard any frame whose sequence number is not strictly greater than the last accepted sequence number.",
+      "verification": ["test"], "test_levels": ["module"], "status": "approved",
+      "source": { "path": "requirements/SSR-003.req.md" }
+    },
+
+    { "id": "arch:ARCH-RX", "kind": "architecture_element", "key": "ARCH-RX", "title": "Receiver safety channel", "safety_related": true, "integrity_level": "SIL3" },
+    { "id": "design:DD-TIMEOUT", "kind": "design_element", "key": "DD-TIMEOUT", "title": "Heartbeat supervision timer" },
+    { "id": "design:DD-AUTH", "kind": "design_element", "key": "DD-AUTH", "title": "Frame authentication and sequencing" },
+
+    { "id": "code:src/supervisor.c#hb_supervise", "kind": "code_unit", "path": "src/supervisor.c", "symbol": "hb_supervise", "language": "c", "infrastructure": null },
+    { "id": "code:src/frame_auth.c#frame_verify", "kind": "code_unit", "path": "src/frame_auth.c", "symbol": "frame_verify", "language": "c", "infrastructure": null },
+    { "id": "code:src/frame_auth.c#seq_check", "kind": "code_unit", "path": "src/frame_auth.c", "symbol": "seq_check", "language": "c", "infrastructure": null },
+    { "id": "code:src/main.c#main", "kind": "code_unit", "path": "src/main.c", "symbol": "main", "language": "c", "infrastructure": { "reason": "Zephyr entry point; starts threads only, no safety logic." } },
+
+    { "id": "env:host-native-sim", "kind": "environment", "name": "native_sim", "env_type": "simulator", "description": "Zephyr native_sim on Linux host" },
+    { "id": "env:target-wb55", "kind": "environment", "name": "nucleo_wb55rg", "env_type": "target", "board": "nucleo_wb55rg", "description": "P-NUCLEO-WB55 HIL rig, dongle as transmitter" },
+
+    { "id": "test:tests/supervisor/test_timeout.c::test_trip_after_300ms", "kind": "test_case", "name": "tests/supervisor/test_timeout.c::test_trip_after_300ms", "level": "module" },
+    { "id": "test:tests/hil/test_link_drop.py::test_link_loss_trips", "kind": "test_case", "name": "tests/hil/test_link_drop.py::test_link_loss_trips", "level": "pe_integration" },
+    { "id": "test:tests/auth/test_mac.c::test_bad_mac_rejected", "kind": "test_case", "name": "tests/auth/test_mac.c::test_bad_mac_rejected", "level": "module" },
+
+    { "id": "result:1", "kind": "test_result", "test": "test:tests/supervisor/test_timeout.c::test_trip_after_300ms", "environment": "env:host-native-sim", "outcome": "pass", "run_at": "2026-10-13T17:40:00Z", "ci_job": "1001" },
+    { "id": "result:2", "kind": "test_result", "test": "test:tests/hil/test_link_drop.py::test_link_loss_trips", "environment": "env:target-wb55", "outcome": "pass", "run_at": "2026-10-13T17:45:00Z", "ci_job": "1002" },
+    { "id": "result:3", "kind": "test_result", "test": "test:tests/auth/test_mac.c::test_bad_mac_rejected", "environment": "env:host-native-sim", "outcome": "pass", "run_at": "2026-10-13T17:40:00Z", "ci_job": "1001" },
+
+    { "id": "cov:1", "kind": "coverage_record", "code_unit": "code:src/supervisor.c#hb_supervise", "environment": "env:host-native-sim", "test_level": "module", "metrics": { "statement": { "covered": 41, "total": 42 }, "branch": { "covered": 18, "total": 20 } } },
+    { "id": "cov:2", "kind": "coverage_record", "code_unit": "code:src/frame_auth.c#frame_verify", "environment": "env:host-native-sim", "test_level": "module", "metrics": { "statement": { "covered": 30, "total": 30 }, "branch": { "covered": 12, "total": 12 } } },
+
+    { "id": "tool:arm-none-eabi-gcc", "kind": "tool", "name": "arm-none-eabi-gcc", "version": "12.3.1", "class": "T3", "evidence": [] },
+    { "id": "tool:gcovr", "kind": "tool", "name": "gcovr", "version": "7.2", "class": "T2", "evidence": [] },
+    { "id": "tool:cppcheck", "kind": "tool", "name": "cppcheck", "version": "2.14.2", "class": "T2", "evidence": [] },
+
+    { "id": "finding:cppcheck/misra-c2012-11.3/frame_auth.c:58", "kind": "finding", "tool": "tool:cppcheck", "rule_id": "misra-c2012-11.3", "message": "Cast between pointer to object type and pointer to a different object type", "location": { "path": "src/frame_auth.c", "line": 58 }, "severity": "warning", "state": "deviated" },
+    { "id": "dev:DEV-001", "kind": "deviation", "key": "DEV-001", "justification": "Cast from received byte buffer to packed frame header; alignment guaranteed by the receive buffer's declaration and checked by static assertion.", "scope": "src/frame_auth.c:58 only", "approved_by": "person:reviewer-a", "approved_at": "2026-10-10T15:00:00Z", "expires_at": "2027-04-30" },
+
+    { "id": "pre:zephyr", "kind": "preexisting_element", "name": "zephyr", "version": "v4.2.0", "origin": "https://github.com/zephyrproject-rtos/zephyr", "route": "3S", "justification": [] },
+
+    { "id": "change:MR-12", "kind": "change", "title": "Tighten heartbeat timeout to 300 ms", "author": "person:jwatson", "merged_at": "2026-10-12T20:00:00Z", "external_ref": "!12", "impact_judgment": "Timeout constant only; module and HIL timeout tests re-run; auth path untouched." },
+    { "id": "review:MR-12", "kind": "review", "author": "person:jwatson", "approvers": ["person:reviewer-a"], "outcome": "approved", "at": "2026-10-12T19:30:00Z", "system": "gitlab", "external_ref": "!12", "section": "06_code" }
+  ],
+
+  "links": [
+    { "type": "derives_from", "from": "req:SSR-001", "to": "req:SYS-004" },
+    { "type": "derives_from", "from": "req:SSR-002", "to": "req:SYS-004" },
+    { "type": "derives_from", "from": "req:SSR-003", "to": "req:SYS-004" },
+    { "type": "allocated_to", "from": "req:SSR-001", "to": "arch:ARCH-RX" },
+    { "type": "allocated_to", "from": "req:SSR-002", "to": "arch:ARCH-RX" },
+    { "type": "allocated_to", "from": "req:SSR-003", "to": "arch:ARCH-RX" },
+    { "type": "derives_from", "from": "design:DD-TIMEOUT", "to": "arch:ARCH-RX" },
+    { "type": "derives_from", "from": "design:DD-AUTH", "to": "arch:ARCH-RX" },
+    { "type": "satisfies", "from": "design:DD-TIMEOUT", "to": "req:SSR-001" },
+    { "type": "satisfies", "from": "design:DD-AUTH", "to": "req:SSR-002" },
+    { "type": "satisfies", "from": "design:DD-AUTH", "to": "req:SSR-003" },
+
+    { "type": "implements", "from": "code:src/supervisor.c#hb_supervise", "to": "design:DD-TIMEOUT", "declared_at": { "path": "src/supervisor.c", "line": 31 } },
+    { "type": "satisfies", "from": "code:src/supervisor.c#hb_supervise", "to": "req:SSR-001", "declared_at": { "path": "src/supervisor.c", "line": 30 } },
+    { "type": "implements", "from": "code:src/frame_auth.c#frame_verify", "to": "design:DD-AUTH", "declared_at": { "path": "src/frame_auth.c", "line": 44 } },
+    { "type": "satisfies", "from": "code:src/frame_auth.c#frame_verify", "to": "req:SSR-002", "declared_at": { "path": "src/frame_auth.c", "line": 43 } },
+    { "type": "implements", "from": "code:src/frame_auth.c#seq_check", "to": "design:DD-AUTH", "declared_at": { "path": "src/frame_auth.c", "line": 77 } },
+    { "type": "satisfies", "from": "code:src/frame_auth.c#seq_check", "to": "req:SSR-003", "declared_at": { "path": "src/frame_auth.c", "line": 76 } },
+
+    { "type": "verifies", "from": "test:tests/supervisor/test_timeout.c::test_trip_after_300ms", "to": "req:SSR-001" },
+    { "type": "verifies", "from": "test:tests/hil/test_link_drop.py::test_link_loss_trips", "to": "req:SSR-001" },
+    { "type": "verifies", "from": "test:tests/auth/test_mac.c::test_bad_mac_rejected", "to": "req:SSR-002" },
+
+    { "type": "justifies", "from": "dev:DEV-001", "to": "finding:cppcheck/misra-c2012-11.3/frame_auth.c:58" },
+    { "type": "reviews", "from": "review:MR-12", "to": "change:MR-12" },
+    { "type": "reviews", "from": "review:MR-12", "to": "code:src/supervisor.c#hb_supervise" },
+    { "type": "affects", "from": "change:MR-12", "to": "req:SSR-001" },
+    { "type": "affects", "from": "change:MR-12", "to": "code:src/supervisor.c#hb_supervise" }
+  ],
+
+  "artifacts": [
+    { "path": "requirements/SYS-004.req.md", "hash": "sha256:d13e47116d2ce44b8ef82b6f8fb581e439f7162a2da1e214b264a8bcf73da74c", "media_type": "text/markdown", "section": "02_software_safety_requirements", "description": "System safety requirement (input)" },
+    { "path": "requirements/SSR-001.req.md", "hash": "sha256:be1854dea2f541b4bf7f32e34e8dcd2a56754d5d8c024c6f4978d9fd9fe5a946", "media_type": "text/markdown", "section": "02_software_safety_requirements" },
+    { "path": "requirements/SSR-002.req.md", "hash": "sha256:d6a8969b366af9eaf9f38720d22273942cb3e6c6f3345f85a481bde8f7a4717b", "media_type": "text/markdown", "section": "02_software_safety_requirements" },
+    { "path": "requirements/SSR-003.req.md", "hash": "sha256:e8b73092634cd858cace645bb42d806de00f4f4a4ebefdddf4adfa3dc7175cec", "media_type": "text/markdown", "section": "02_software_safety_requirements" }
+  ]
+}

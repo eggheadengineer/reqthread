@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:evidence-bundle:schema:standard-data:0.1.0",
+  "title": "Standard data",
+  "description": "Customer-loaded description of a safety standard: integrity levels, recommendation scale, package sections, test levels, tool classes, compliance routes, techniques and coverage expectations. Transcribed by the licensee from their own copy; the tool ships no standard text.",
+  "type": "object",
+  "required": [
+    "data_format", "standard", "licensee", "integrity_levels", "recommendation_scale",
+    "package_sections", "test_levels", "tool_classes", "preexisting_routes",
+    "techniques", "coverage_expectations"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "data_format": { "const": "0.1.0" },
+    "standard": {
+      "type": "object",
+      "required": ["id", "title", "edition", "publisher"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "edition": { "type": "string", "minLength": 1 },
+        "publisher": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "licensee": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Organisation asserting it holds a licensed copy of the standard this data was transcribed from."
+    },
+    "integrity_levels": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "order"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "name": { "type": "string" },
+          "order": { "type": "integer", "description": "Higher means more stringent." }
+        },
+        "additionalProperties": false
+      }
+    },
+    "recommendation_scale": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["code", "meaning", "unused_requires_justification"],
+        "properties": {
+          "code": { "type": "string", "minLength": 1 },
+          "meaning": { "type": "string" },
+          "unused_requires_justification": { "type": "boolean" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "package_sections": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "title"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[0-9]{2}_[a-z0-9_]+$" },
+          "title": { "type": "string" },
+          "clauses": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": false
+      }
+    },
+    "test_levels": { "$ref": "#/$defs/id_name_list" },
+    "tool_classes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "requires_evidence"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "name": { "type": "string" },
+          "requires_evidence": { "type": "boolean" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "preexisting_routes": { "$ref": "#/$defs/id_name_list" },
+    "techniques": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "section", "levels"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "group": { "type": "string" },
+          "name": { "type": "string", "minLength": 1 },
+          "section": { "type": "string" },
+          "levels": {
+            "type": "object",
+            "description": "Integrity level id -> recommendation code.",
+            "additionalProperties": { "type": "string" }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "coverage_expectations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["integrity_level", "metric", "target_percent", "strength"],
+        "properties": {
+          "integrity_level": { "type": "string" },
+          "metric": { "enum": ["entry", "statement", "branch", "mcdc"] },
+          "target_percent": { "type": "number", "minimum": 0, "maximum": 100 },
+          "strength": { "type": "string", "description": "Recommendation code." }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "$defs": {
+    "id_name_list": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "name"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "name": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  }
+}

@@ -1,0 +1,6 @@
+graft docs
+graft examples
+graft standards
+graft tests
+prune examples/wb55-ref/build
+global-exclude __pycache__ *.py[cod]

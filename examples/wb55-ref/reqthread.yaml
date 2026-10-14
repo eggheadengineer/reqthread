@@ -1,0 +1,56 @@
+version: 1
+
+project:
+  id: wb55-black-channel
+  name: WB55 black-channel safety link (reference project)
+  integrity_claim: SIL3
+
+standard: ../../standards/iec61508-3.skeleton.yaml
+
+requirements: { paths: [requirements], section: 02_software_safety_requirements }
+architecture: { paths: [architecture], section: 04_architecture }
+design: { paths: [design], section: 05_detailed_design }
+
+sources:
+  - { glob: "src/**/*.c", language: c }
+  - { glob: "src/**/*.h", language: c }
+
+tests:
+  - { glob: "tests/module/**/*.py", language: python, level: module }
+  - { glob: "tests/hil/**/*.py", language: python, level: pe_integration }
+
+environments:
+  - id: host
+    name: host-x86_64
+    env_type: host
+    description: Linux host; C built with gcc --coverage and driven from pytest via ctypes
+  - id: target-wb55
+    name: nucleo_wb55rg
+    env_type: target
+    board: nucleo_wb55rg
+    description: P-NUCLEO-WB55 HIL rig (board receives, USB dongle transmits)
+
+ingest:
+  - { type: junit, path: ci-out/junit-module.xml, environment: host, section: 07_module_testing }
+  - { type: junit, path: ci-out/junit-hil.xml, environment: target-wb55, section: 09_pe_integration, optional: true }
+  - { type: lcov, path: ci-out/coverage.lcov, environment: host, test_level: module, section: 07_module_testing }
+  - { type: sarif, path: ci-out/flawfinder.sarif, section: 06_code }
+
+deviations: { path: deviations.yaml, section: 06_code }
+
+people:
+  - { id: jwatson, name: James Watson, roles: [firmware_lead] }
+  - { id: reviewer-a, name: Example Reviewer, roles: [safety_reviewer] }
+
+tools:
+  - { id: gcc, name: gcc, version: "13.3.0", class: T3 }
+  - { id: gcovr, name: gcovr, version: "8.6", class: T2 }
+  - { id: pytest, name: pytest, version: "9.1.1", class: T2 }
+  - { id: flawfinder, name: Flawfinder, version: "2.0.20", class: T2 }
+
+preexisting:
+  - id: zephyr
+    name: zephyr
+    version: v4.2.0
+    origin: https://github.com/zephyrproject-rtos/zephyr
+    route: "3S"

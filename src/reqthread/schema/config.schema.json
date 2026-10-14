@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:evidence-bundle:schema:config:0.1.0",
+  "title": "Project configuration",
+  "description": "Paths are relative to the directory containing the config file.",
+  "type": "object",
+  "required": ["version", "project", "standard", "requirements"],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "const": 1 },
+    "project": {
+      "type": "object",
+      "required": ["id", "name", "integrity_claim"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+        "name": { "type": "string", "minLength": 1 },
+        "integrity_claim": { "type": "string" }
+      }
+    },
+    "standard": { "type": "string", "description": "Path to the standard-data YAML." },
+    "requirements": { "$ref": "#/$defs/item_dirs" },
+    "architecture": { "$ref": "#/$defs/item_dirs" },
+    "design": { "$ref": "#/$defs/item_dirs" },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["glob", "language"],
+        "additionalProperties": false,
+        "properties": {
+          "glob": { "type": "string" },
+          "language": { "enum": ["c", "cpp", "python"] }
+        }
+      }
+    },
+    "tests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["glob", "language", "level"],
+        "additionalProperties": false,
+        "properties": {
+          "glob": { "type": "string" },
+          "language": { "enum": ["c", "cpp", "python"] },
+          "level": { "type": "string", "description": "Test level id from the standard data." }
+        }
+      }
+    },
+    "environments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "env_type"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" },
+          "name": { "type": "string" },
+          "env_type": { "enum": ["host", "simulator", "target"] },
+          "board": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "ingest": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "path", "section"],
+        "additionalProperties": false,
+        "properties": {
+          "type": { "enum": ["junit", "lcov", "cobertura", "sarif"] },
+          "path": { "type": "string" },
+          "section": { "type": "string", "description": "Package section id this input is filed under." },
+          "environment": { "type": "string", "description": "Environment id; required for junit, lcov, cobertura." },
+          "test_level": { "type": "string", "description": "Test level id; required for lcov and cobertura." },
+          "optional": { "type": "boolean", "description": "Skip silently if the file is absent." }
+        },
+        "allOf": [
+          { "if": { "properties": { "type": { "enum": ["junit", "lcov", "cobertura"] } } }, "then": { "required": ["environment"] } },
+          { "if": { "properties": { "type": { "enum": ["lcov", "cobertura"] } } }, "then": { "required": ["test_level"] } }
+        ]
+      }
+    },
+    "deviations": {
+      "type": "object",
+      "required": ["path", "section"],
+      "additionalProperties": false,
+      "properties": { "path": { "type": "string" }, "section": { "type": "string" } }
+    },
+    "people": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "roles"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" },
+          "name": { "type": "string" },
+          "roles": { "type": "array", "items": { "type": "string" } },
+          "competence_record": { "type": "string" }
+        }
+      }
+    },
+    "tools": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "version", "class"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" },
+          "name": { "type": "string" },
+          "version": { "type": "string" },
+          "class": { "type": ["string", "null"] },
+          "evidence": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "preexisting": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "version", "route"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" },
+          "name": { "type": "string" },
+          "version": { "type": "string" },
+          "origin": { "type": "string" },
+          "route": { "type": ["string", "null"] },
+          "justification": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "item_dirs": {
+      "type": "object",
+      "required": ["paths", "section"],
+      "additionalProperties": false,
+      "properties": {
+        "paths": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+        "section": { "type": "string" }
+      }
+    }
+  }
+}

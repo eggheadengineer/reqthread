@@ -1,0 +1,9 @@
+- key: DEV-001
+  match: { tool: flawfinder, rule: FF1004, path: src/frame_auth.c }
+  justification: >-
+    Both memcpy calls in frame_tag copy fixed sizes (sizeof seq, FRAME_PAYLOAD_LEN) into a stack
+    buffer declared as exactly their sum, so neither can overflow. Flawfinder flags memcpy lexically.
+  scope: src/frame_auth.c, frame_tag only
+  approved_by: reviewer-a
+  approved_at: 2026-10-13T15:00:00Z
+  expires_at: 2027-04-30

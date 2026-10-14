@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:evidence-bundle:schema:requirement-file:0.1.0",
+  "title": "Requirement file front matter",
+  "description": "YAML front matter of a *.req.md file. The first H1 of the body is the title; body text up to an optional '## Rationale' heading is the requirement text.",
+  "type": "object",
+  "required": ["id", "level", "type", "status"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "$ref": "#/$defs/key" },
+    "level": { "enum": ["system", "software", "derived"] },
+    "type": { "enum": ["functional", "integrity"] },
+    "integrity_level": { "type": "string" },
+    "derives_from": { "$ref": "#/$defs/keys" },
+    "allocated_to": { "$ref": "#/$defs/keys" },
+    "supersedes": { "$ref": "#/$defs/keys" },
+    "verification": {
+      "type": "array",
+      "items": { "enum": ["test", "analysis", "review", "inspection", "demonstration"] },
+      "uniqueItems": true
+    },
+    "test_levels": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "status": { "enum": ["draft", "approved", "retired"] }
+  },
+  "$defs": {
+    "key": { "type": "string", "pattern": "^[A-Z][A-Z0-9]*-[A-Z0-9][A-Z0-9._-]*$" },
+    "keys": { "type": "array", "items": { "$ref": "#/$defs/key" }, "uniqueItems": true }
+  }
+}

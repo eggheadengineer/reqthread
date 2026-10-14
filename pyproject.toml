@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "reqthread"
+dynamic = ["version"]
+description = "Requirements traceability and certification evidence for safety-critical embedded software."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{ name = "James Watson" }]
+keywords = ["traceability", "functional safety", "IEC 61508", "embedded", "requirements", "certification", "evidence", "zephyr"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Embedded Systems",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Software Development :: Testing",
+]
+dependencies = ["PyYAML>=6", "jsonschema>=4.10"]
+
+[project.urls]
+Homepage = "https://github.com/eggheadengineer/reqthread"
+Documentation = "https://github.com/eggheadengineer/reqthread/blob/main/docs/FORMATS.md"
+Issues = "https://github.com/eggheadengineer/reqthread/issues"
+
+[project.scripts]
+reqthread = "reqthread.cli:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "reqthread.__version__" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+reqthread = ["schema/*.json"]

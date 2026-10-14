@@ -1,0 +1,97 @@
+name: reqthread
+description: Traceability gate for safety-critical embedded software. Fails on new gaps relative to the default branch.
+
+inputs:
+  config:
+    description: Path to the project config.
+    default: reqthread.yaml
+  baseline-branch:
+    description: Branch whose latest successful run provides the baseline bundle.
+    default: ${{ github.event.repository.default_branch }}
+  fail-on-baseline-branch:
+    description: Also fail runs on the baseline branch when gaps exist. Off by default so the baseline still gets recorded.
+    default: "false"
+  python-version:
+    default: "3.12"
+  package:
+    description: >-
+      pip requirement for the tool. Empty (the default) installs from this action's own source at the
+      pinned ref, so the action and tool versions always match.
+    default: ""
+  github-token:
+    default: ${{ github.token }}
+
+outputs:
+  status:
+    description: pass or fail
+    value: ${{ steps.check.outputs.status }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install
+      shell: bash
+      env:
+        PKG: ${{ inputs.package }}
+        ACTION_ROOT: ${{ github.action_path }}/../..
+      run: |
+        if [ -n "$PKG" ]; then pip install --quiet "$PKG"; else pip install --quiet "$ACTION_ROOT"; fi
+        reqthread --version
+
+    - name: Fetch baseline bundle
+      if: github.ref_name != inputs.baseline-branch
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        BASE: ${{ inputs.baseline-branch }}
+      run: |
+        run_id=$(gh run list --repo "$GITHUB_REPOSITORY" --branch "$BASE" --workflow "$GITHUB_WORKFLOW" \
+                   --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+        if [ -n "$run_id" ] && gh run download "$run_id" --repo "$GITHUB_REPOSITORY" --name reqthread --dir .reqthread-baseline; then
+          echo "REQTHREAD_BASELINE=.reqthread-baseline/bundle.json" >> "$GITHUB_ENV"
+        else
+          echo "::notice::No baseline bundle on $BASE yet; every gap counts as new."
+        fi
+
+    - name: Check
+      id: check
+      shell: bash
+      env:
+        CONFIG: ${{ inputs.config }}
+        ON_BASELINE_BRANCH: ${{ github.ref_name == inputs.baseline-branch }}
+        FAIL_ON_BASELINE: ${{ inputs.fail-on-baseline-branch }}
+      run: |
+        set +e
+        reqthread check -c "$CONFIG" --commit "$GITHUB_SHA" ${REQTHREAD_BASELINE:+--baseline "$REQTHREAD_BASELINE"} \
+          -o reqthread/bundle.json --html reqthread/report.html --json reqthread/gaps.json
+        code=$?
+        set -e
+        if [ "$code" -eq 1 ]; then echo "status=error" >> "$GITHUB_OUTPUT"; exit 1; fi
+        if [ "$code" -eq 2 ]; then echo "status=fail" >> "$GITHUB_OUTPUT"; else echo "status=pass" >> "$GITHUB_OUTPUT"; fi
+        echo "REQTHREAD_EXIT=$code" >> "$GITHUB_ENV"
+
+    - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      if: always()
+      with:
+        name: reqthread
+        path: reqthread/
+        if-no-files-found: ignore
+
+    - name: Gate
+      shell: bash
+      env:
+        ON_BASELINE_BRANCH: ${{ github.ref_name == inputs.baseline-branch }}
+        FAIL_ON_BASELINE: ${{ inputs.fail-on-baseline-branch }}
+      run: |
+        if [ "${REQTHREAD_EXIT:-0}" -eq 2 ]; then
+          if [ "$ON_BASELINE_BRANCH" = "true" ] && [ "$FAIL_ON_BASELINE" != "true" ]; then
+            echo "::warning::Traceability gaps on the baseline branch; recorded, not failing. See the reqthread artifact."
+          else
+            echo "::error::New traceability gaps. See the reqthread artifact (report.html)."
+            exit 1
+          fi
+        fi

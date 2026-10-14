@@ -1,0 +1,58 @@
+# GitLab CI/CD component. Include with:
+#   include:
+#     - component: $CI_SERVER_FQDN/<group>/<this-project>/reqthread@<version>
+#       inputs:
+#         config: reqthread.yaml
+spec:
+  inputs:
+    config:
+      default: reqthread.yaml
+    stage:
+      default: test
+    image:
+      default: python:3.12-slim
+    package:
+      description: >-
+        pip requirement for the tool, e.g. a git URL pinned to a tag. Required until
+        reqthread is published to PyPI.
+    fail_on_default_branch:
+      type: boolean
+      default: false
+---
+reqthread:
+  stage: $[[ inputs.stage ]]
+  image: $[[ inputs.image ]]
+  variables:
+    REQTHREAD_CONFIG: $[[ inputs.config ]]
+    REQTHREAD_PACKAGE: $[[ inputs.package ]]
+    REQTHREAD_FAIL_ON_DEFAULT: "$[[ inputs.fail_on_default_branch ]]"
+  script:
+    - pip install --quiet "$REQTHREAD_PACKAGE"
+    - |
+      BASELINE=""
+      if [ "$CI_COMMIT_BRANCH" != "$CI_DEFAULT_BRANCH" ]; then
+        url="$CI_API_V4_URL/projects/$CI_PROJECT_ID/jobs/artifacts/$CI_DEFAULT_BRANCH/raw/reqthread/bundle.json?job=$CI_JOB_NAME"
+        if python3 -c "import os,sys,urllib.request as u; r=u.Request(sys.argv[1], headers={'JOB-TOKEN': os.environ['CI_JOB_TOKEN']}); open('baseline.json','wb').write(u.urlopen(r).read())" "$url" 2>/dev/null; then
+          BASELINE="--baseline baseline.json"
+        else
+          echo "No baseline bundle on $CI_DEFAULT_BRANCH yet; every gap counts as new."
+        fi
+      fi
+      set +e
+      reqthread check -c "$REQTHREAD_CONFIG" --commit "$CI_COMMIT_SHA" $BASELINE \
+        -o reqthread/bundle.json --html reqthread/report.html --json reqthread/gaps.json
+      code=$?
+      set -e
+      if [ "$code" -eq 1 ]; then exit 1; fi
+      if [ "$code" -eq 2 ]; then
+        if [ "$CI_COMMIT_BRANCH" = "$CI_DEFAULT_BRANCH" ] && [ "$REQTHREAD_FAIL_ON_DEFAULT" != "true" ]; then
+          echo "Traceability gaps on $CI_DEFAULT_BRANCH; recorded as the baseline, not failing."
+        else
+          echo "New traceability gaps. See the reqthread report artifact."
+          exit 1
+        fi
+      fi
+  artifacts:
+    when: always
+    paths: [reqthread/]
+    expose_as: reqthread report
