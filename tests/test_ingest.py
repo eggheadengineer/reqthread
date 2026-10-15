@@ -82,10 +82,12 @@ class Coverage(unittest.TestCase):
         files, unmapped = parse_lcov(CI / "coverage.lcov", REF, KNOWN)
         self.assertEqual(sorted(files), ["src/frame_auth.c", "src/supervisor.c"])
         self.assertEqual(unmapped, [])
-        # seq_check is lines 30-39 in src/frame_auth.c: ran, but the replay branch never did
+        # seq_check is lines 30-39 in src/frame_auth.c. The module tests alone left the replay branch
+        # unexecuted (5/6, 1/4); the faultbench replay scenario covers it, so the fixtures now show full
+        # coverage while SSR-003 still has no traced test. Coverage is not traceability.
         m = unit_metrics(files["src/frame_auth.c"], 30, 39)
-        self.assertEqual(m["statement"], {"covered": 5, "total": 6})
-        self.assertEqual(m["branch"], {"covered": 1, "total": 4})
+        self.assertEqual(m["statement"], {"covered": 6, "total": 6})
+        self.assertEqual(m["branch"], {"covered": 4, "total": 4})
 
     def test_real_cobertura_agrees_with_lcov(self):
         lcov, _ = parse_lcov(CI / "coverage.lcov", REF, KNOWN)

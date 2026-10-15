@@ -19,6 +19,7 @@ sources:
 
 tests:
   - { glob: "tests/module/**/*.py", language: python, level: module }
+  - { glob: "tests/fault/**/*.py", language: python, level: integration }
   - { glob: "tests/hil/**/*.py", language: python, level: pe_integration }
 
 environments:
@@ -34,6 +35,7 @@ environments:
 
 ingest:
   - { type: junit, path: ci-out/junit-module.xml, environment: host, section: 07_module_testing }
+  - { type: junit, path: ci-out/junit-fault.xml, environment: host, section: 08_integration_testing }
   - { type: junit, path: ci-out/junit-hil.xml, environment: target-wb55, section: 09_pe_integration, optional: true }
   - { type: lcov, path: ci-out/coverage.lcov, environment: host, test_level: module, section: 07_module_testing }
   - { type: sarif, path: ci-out/flawfinder.sarif, section: 06_code }
@@ -49,6 +51,7 @@ tools:
   - { id: gcovr, name: gcovr, version: "8.6", class: T2 }
   - { id: pytest, name: pytest, version: "9.1.1", class: T2 }
   - { id: flawfinder, name: Flawfinder, version: "2.0.20", class: T2 }
+  - { id: faultbench, name: faultbench, version: "0.1.0", class: T2 }
 
 preexisting:
   - id: zephyr
