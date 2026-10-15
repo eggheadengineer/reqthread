@@ -1,37 +1,86 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:evidence-bundle:schema:bundle:0.1.0",
+  "$id": "urn:evidence-bundle:schema:bundle:0.2.0",
   "title": "Evidence bundle",
   "description": "One baseline's traceability graph, verification records and artifact manifest. Fields express ownership and measurement; links express traceability. Referential integrity and standard-data conformance are checked by the validator, not by this schema.",
   "type": "object",
-  "required": ["bundle_format", "generator", "created_at", "project", "baseline", "entities", "links", "artifacts"],
+  "required": [
+    "bundle_format",
+    "generator",
+    "created_at",
+    "project",
+    "baseline",
+    "entities",
+    "links",
+    "artifacts"
+  ],
   "additionalProperties": false,
   "properties": {
-    "bundle_format": { "const": "0.1.0" },
+    "bundle_format": {
+      "type": "string",
+      "pattern": "^0\\.[0-9]+\\.[0-9]+$",
+      "description": "Semver. Readers accept any minor of major 0."
+    },
     "generator": {
       "type": "object",
-      "required": ["name", "version"],
+      "required": [
+        "name",
+        "version"
+      ],
       "properties": {
-        "name": { "type": "string", "minLength": 1 },
-        "version": { "type": "string", "minLength": 1 }
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        }
       },
       "additionalProperties": false
     },
-    "created_at": { "type": "string", "format": "date-time" },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
     "project": {
       "type": "object",
-      "required": ["id", "name", "integrity_claim", "standard"],
+      "required": [
+        "id",
+        "name",
+        "integrity_claim",
+        "standard"
+      ],
       "properties": {
-        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
-        "name": { "type": "string", "minLength": 1 },
-        "integrity_claim": { "type": "string", "description": "Integrity level id from the loaded standard data, e.g. SIL3." },
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "integrity_claim": {
+          "type": "string",
+          "description": "Integrity level id from the loaded standard data, e.g. SIL3."
+        },
         "standard": {
           "type": "object",
-          "required": ["id", "edition", "data_hash"],
+          "required": [
+            "id",
+            "edition",
+            "data_hash"
+          ],
           "properties": {
-            "id": { "type": "string" },
-            "edition": { "type": "string" },
-            "data_hash": { "$ref": "#/$defs/hash" }
+            "id": {
+              "type": "string"
+            },
+            "edition": {
+              "type": "string"
+            },
+            "data_hash": {
+              "$ref": "#/$defs/hash"
+            }
           },
           "additionalProperties": false
         }
@@ -40,151 +89,396 @@
     },
     "baseline": {
       "type": "object",
-      "required": ["id", "commit", "previous_bundle_hash"],
+      "required": [
+        "id",
+        "commit",
+        "previous_bundle_hash"
+      ],
       "properties": {
-        "id": { "type": "string", "minLength": 1 },
-        "commit": { "$ref": "#/$defs/commit" },
-        "tag": { "type": "string" },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "commit": {
+          "$ref": "#/$defs/commit"
+        },
+        "tag": {
+          "type": "string"
+        },
         "previous_bundle_hash": {
           "description": "Canonical hash of the previous baseline's bundle; null for the first baseline. Chains baselines into a tamper-evident history.",
-          "oneOf": [{ "$ref": "#/$defs/hash" }, { "type": "null" }]
+          "oneOf": [
+            {
+              "$ref": "#/$defs/hash"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "additionalProperties": false
     },
-    "entities": { "type": "array", "items": { "$ref": "#/$defs/entity" } },
-    "links": { "type": "array", "items": { "$ref": "#/$defs/link" } },
-    "artifacts": { "type": "array", "items": { "$ref": "#/$defs/artifact" } }
+    "entities": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/entity"
+      }
+    },
+    "links": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/link"
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/artifact"
+      }
+    }
   },
-
   "$defs": {
-    "hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
-    "commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
-    "key": { "type": "string", "pattern": "^[A-Z][A-Z0-9]*-[A-Z0-9][A-Z0-9._-]*$" },
-    "ref": { "type": "string", "pattern": "^[a-z]+:\\S+$" },
-    "date_time": { "type": "string", "format": "date-time" },
+    "hash": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "key": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9]*-[A-Z0-9][A-Z0-9._-]*$"
+    },
+    "ref": {
+      "type": "string",
+      "pattern": "^[a-z]+:\\S+$"
+    },
+    "date_time": {
+      "type": "string",
+      "format": "date-time"
+    },
     "source": {
       "type": "object",
-      "required": ["path"],
+      "required": [
+        "path"
+      ],
       "properties": {
-        "path": { "type": "string", "minLength": 1 },
-        "line": { "type": "integer", "minimum": 1 },
-        "commit": { "$ref": "#/$defs/commit" }
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "line": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "commit": {
+          "$ref": "#/$defs/commit"
+        }
       },
       "additionalProperties": false
     },
     "metric": {
       "type": "object",
-      "required": ["covered", "total"],
+      "required": [
+        "covered",
+        "total"
+      ],
       "properties": {
-        "covered": { "type": "integer", "minimum": 0 },
-        "total": { "type": "integer", "minimum": 0 }
+        "covered": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        }
       },
       "additionalProperties": false
     },
-    "artifact_paths": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
-
+    "artifact_paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
     "entity_base": {
       "type": "object",
-      "required": ["id", "kind"],
+      "required": [
+        "id",
+        "kind"
+      ],
       "properties": {
-        "id": { "$ref": "#/$defs/ref" },
-        "kind": { "type": "string" },
-        "source": { "$ref": "#/$defs/source" },
-        "extra": { "type": "object", "description": "Generator- or customer-specific attributes. Never read by gate rules." }
+        "id": {
+          "$ref": "#/$defs/ref"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/source"
+        },
+        "extra": {
+          "type": "object",
+          "description": "Generator- or customer-specific attributes. Never read by gate rules."
+        }
       }
     },
-
     "entity": {
       "oneOf": [
-        { "$ref": "#/$defs/requirement" },
-        { "$ref": "#/$defs/architecture_element" },
-        { "$ref": "#/$defs/design_element" },
-        { "$ref": "#/$defs/code_unit" },
-        { "$ref": "#/$defs/test_case" },
-        { "$ref": "#/$defs/environment" },
-        { "$ref": "#/$defs/test_result" },
-        { "$ref": "#/$defs/coverage_record" },
-        { "$ref": "#/$defs/finding" },
-        { "$ref": "#/$defs/deviation" },
-        { "$ref": "#/$defs/review" },
-        { "$ref": "#/$defs/tool" },
-        { "$ref": "#/$defs/preexisting_element" },
-        { "$ref": "#/$defs/technique_status" },
-        { "$ref": "#/$defs/change" },
-        { "$ref": "#/$defs/person" }
+        {
+          "$ref": "#/$defs/requirement"
+        },
+        {
+          "$ref": "#/$defs/architecture_element"
+        },
+        {
+          "$ref": "#/$defs/design_element"
+        },
+        {
+          "$ref": "#/$defs/code_unit"
+        },
+        {
+          "$ref": "#/$defs/test_case"
+        },
+        {
+          "$ref": "#/$defs/environment"
+        },
+        {
+          "$ref": "#/$defs/test_result"
+        },
+        {
+          "$ref": "#/$defs/coverage_record"
+        },
+        {
+          "$ref": "#/$defs/finding"
+        },
+        {
+          "$ref": "#/$defs/deviation"
+        },
+        {
+          "$ref": "#/$defs/review"
+        },
+        {
+          "$ref": "#/$defs/tool"
+        },
+        {
+          "$ref": "#/$defs/preexisting_element"
+        },
+        {
+          "$ref": "#/$defs/technique_status"
+        },
+        {
+          "$ref": "#/$defs/change"
+        },
+        {
+          "$ref": "#/$defs/person"
+        },
+        {
+          "$ref": "#/$defs/hazard"
+        },
+        {
+          "$ref": "#/$defs/cause"
+        }
       ]
     },
-
     "requirement": {
       "$ref": "#/$defs/entity_base",
-      "required": ["key", "level", "type", "title", "text", "status"],
+      "required": [
+        "key",
+        "level",
+        "type",
+        "title",
+        "text",
+        "status"
+      ],
       "properties": {
-        "id": { "pattern": "^req:" },
-        "kind": { "const": "requirement" },
-        "key": { "$ref": "#/$defs/key" },
-        "level": { "enum": ["system", "software", "derived"] },
-        "type": { "enum": ["functional", "integrity"] },
-        "integrity_level": { "type": ["string", "null"] },
-        "title": { "type": "string", "minLength": 1 },
-        "text": { "type": "string", "minLength": 1 },
-        "rationale": { "type": "string" },
+        "id": {
+          "pattern": "^req:"
+        },
+        "kind": {
+          "const": "requirement"
+        },
+        "key": {
+          "$ref": "#/$defs/key"
+        },
+        "level": {
+          "enum": [
+            "system",
+            "software",
+            "derived"
+          ]
+        },
+        "type": {
+          "enum": [
+            "functional",
+            "integrity"
+          ]
+        },
+        "integrity_level": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rationale": {
+          "type": "string"
+        },
         "verification": {
           "type": "array",
-          "items": { "enum": ["test", "analysis", "review", "inspection", "demonstration"] },
+          "items": {
+            "enum": [
+              "test",
+              "analysis",
+              "review",
+              "inspection",
+              "demonstration"
+            ]
+          },
           "uniqueItems": true
         },
-        "test_levels": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
-        "status": { "enum": ["draft", "approved", "retired"] }
+        "test_levels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "status": {
+          "enum": [
+            "draft",
+            "approved",
+            "retired"
+          ]
+        }
       },
       "unevaluatedProperties": false
     },
-
     "architecture_element": {
       "$ref": "#/$defs/entity_base",
-      "required": ["key", "title", "safety_related"],
+      "required": [
+        "key",
+        "title",
+        "safety_related"
+      ],
       "properties": {
-        "id": { "pattern": "^arch:" },
-        "kind": { "const": "architecture_element" },
-        "key": { "$ref": "#/$defs/key" },
-        "title": { "type": "string", "minLength": 1 },
-        "safety_related": { "type": "boolean" },
-        "integrity_level": { "type": ["string", "null"] },
-        "description": { "type": "string" }
+        "id": {
+          "pattern": "^arch:"
+        },
+        "kind": {
+          "const": "architecture_element"
+        },
+        "key": {
+          "$ref": "#/$defs/key"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "safety_related": {
+          "type": "boolean"
+        },
+        "integrity_level": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "description": {
+          "type": "string"
+        }
       },
       "unevaluatedProperties": false
     },
-
     "design_element": {
       "$ref": "#/$defs/entity_base",
-      "required": ["key", "title"],
+      "required": [
+        "key",
+        "title"
+      ],
       "properties": {
-        "id": { "pattern": "^design:" },
-        "kind": { "const": "design_element" },
-        "key": { "$ref": "#/$defs/key" },
-        "title": { "type": "string", "minLength": 1 },
-        "description": { "type": "string" }
+        "id": {
+          "pattern": "^design:"
+        },
+        "kind": {
+          "const": "design_element"
+        },
+        "key": {
+          "$ref": "#/$defs/key"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string"
+        }
       },
       "unevaluatedProperties": false
     },
-
     "code_unit": {
       "$ref": "#/$defs/entity_base",
-      "required": ["path", "symbol", "language", "infrastructure"],
+      "required": [
+        "path",
+        "symbol",
+        "language",
+        "infrastructure"
+      ],
       "properties": {
-        "id": { "pattern": "^code:" },
-        "kind": { "const": "code_unit" },
-        "path": { "type": "string", "minLength": 1 },
-        "symbol": { "type": ["string", "null"], "description": "Function or class; null means the whole file." },
-        "language": { "enum": ["c", "cpp", "python", "rust", "asm", "other"] },
+        "id": {
+          "pattern": "^code:"
+        },
+        "kind": {
+          "const": "code_unit"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "symbol": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Function or class; null means the whole file."
+        },
+        "language": {
+          "enum": [
+            "c",
+            "cpp",
+            "python",
+            "rust",
+            "asm",
+            "other"
+          ]
+        },
         "infrastructure": {
           "description": "Non-null marks code deliberately not traced to a requirement, with the reason. Null means it must trace.",
           "oneOf": [
-            { "type": "null" },
+            {
+              "type": "null"
+            },
             {
               "type": "object",
-              "required": ["reason"],
-              "properties": { "reason": { "type": "string", "minLength": 1 } },
+              "required": [
+                "reason"
+              ],
+              "properties": {
+                "reason": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
               "additionalProperties": false
             }
           ]
@@ -192,219 +486,664 @@
       },
       "unevaluatedProperties": false
     },
-
     "test_case": {
       "$ref": "#/$defs/entity_base",
-      "required": ["name", "level"],
+      "required": [
+        "name",
+        "level"
+      ],
       "properties": {
-        "id": { "pattern": "^test:" },
-        "kind": { "const": "test_case" },
-        "name": { "type": "string", "minLength": 1, "description": "Stable identifier, e.g. path::function." },
-        "level": { "type": "string", "description": "Test level id from the loaded standard data." }
+        "id": {
+          "pattern": "^test:"
+        },
+        "kind": {
+          "const": "test_case"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stable identifier, e.g. path::function."
+        },
+        "level": {
+          "type": "string",
+          "description": "Test level id from the loaded standard data."
+        }
       },
       "unevaluatedProperties": false
     },
-
     "environment": {
       "$ref": "#/$defs/entity_base",
-      "required": ["name", "env_type"],
+      "required": [
+        "name",
+        "env_type"
+      ],
       "properties": {
-        "id": { "pattern": "^env:" },
-        "kind": { "const": "environment" },
-        "name": { "type": "string", "minLength": 1 },
-        "env_type": { "enum": ["host", "simulator", "target"] },
-        "board": { "type": "string" },
-        "description": { "type": "string" }
+        "id": {
+          "pattern": "^env:"
+        },
+        "kind": {
+          "const": "environment"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "env_type": {
+          "enum": [
+            "host",
+            "simulator",
+            "target"
+          ]
+        },
+        "board": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
       },
       "unevaluatedProperties": false
     },
-
     "test_result": {
       "$ref": "#/$defs/entity_base",
-      "required": ["test", "environment", "outcome", "run_at"],
+      "required": [
+        "test",
+        "environment",
+        "outcome",
+        "run_at"
+      ],
       "properties": {
-        "id": { "pattern": "^result:" },
-        "kind": { "const": "test_result" },
-        "test": { "type": "string", "pattern": "^test:" },
-        "environment": { "type": "string", "pattern": "^env:" },
-        "outcome": { "enum": ["pass", "fail", "error", "skip"] },
-        "run_at": { "$ref": "#/$defs/date_time" },
-        "ci_job": { "type": "string" }
+        "id": {
+          "pattern": "^result:"
+        },
+        "kind": {
+          "const": "test_result"
+        },
+        "test": {
+          "type": "string",
+          "pattern": "^test:"
+        },
+        "environment": {
+          "type": "string",
+          "pattern": "^env:"
+        },
+        "outcome": {
+          "enum": [
+            "pass",
+            "fail",
+            "error",
+            "skip"
+          ]
+        },
+        "run_at": {
+          "$ref": "#/$defs/date_time"
+        },
+        "ci_job": {
+          "type": "string"
+        }
       },
       "unevaluatedProperties": false
     },
-
     "coverage_record": {
       "$ref": "#/$defs/entity_base",
-      "required": ["code_unit", "environment", "test_level", "metrics"],
+      "required": [
+        "code_unit",
+        "environment",
+        "test_level",
+        "metrics"
+      ],
       "properties": {
-        "id": { "pattern": "^cov:" },
-        "kind": { "const": "coverage_record" },
-        "code_unit": { "type": "string", "pattern": "^code:" },
-        "environment": { "type": "string", "pattern": "^env:" },
-        "test_level": { "type": "string" },
+        "id": {
+          "pattern": "^cov:"
+        },
+        "kind": {
+          "const": "coverage_record"
+        },
+        "code_unit": {
+          "type": "string",
+          "pattern": "^code:"
+        },
+        "environment": {
+          "type": "string",
+          "pattern": "^env:"
+        },
+        "test_level": {
+          "type": "string"
+        },
         "metrics": {
           "type": "object",
           "minProperties": 1,
           "properties": {
-            "entry": { "$ref": "#/$defs/metric" },
-            "statement": { "$ref": "#/$defs/metric" },
-            "branch": { "$ref": "#/$defs/metric" },
-            "mcdc": { "$ref": "#/$defs/metric" }
+            "entry": {
+              "$ref": "#/$defs/metric"
+            },
+            "statement": {
+              "$ref": "#/$defs/metric"
+            },
+            "branch": {
+              "$ref": "#/$defs/metric"
+            },
+            "mcdc": {
+              "$ref": "#/$defs/metric"
+            }
           },
           "additionalProperties": false
         }
       },
       "unevaluatedProperties": false
     },
-
     "finding": {
       "$ref": "#/$defs/entity_base",
-      "required": ["tool", "rule_id", "location", "severity", "state"],
+      "required": [
+        "tool",
+        "rule_id",
+        "location",
+        "severity",
+        "state"
+      ],
       "properties": {
-        "id": { "pattern": "^finding:" },
-        "kind": { "const": "finding" },
-        "tool": { "type": "string", "pattern": "^tool:" },
-        "rule_id": { "type": "string", "minLength": 1 },
-        "message": { "type": "string" },
-        "location": { "$ref": "#/$defs/source" },
-        "severity": { "enum": ["error", "warning", "note", "none"], "description": "SARIF result level." },
-        "state": { "enum": ["open", "fixed", "deviated"] },
-        "fingerprint": { "type": "string" }
+        "id": {
+          "pattern": "^finding:"
+        },
+        "kind": {
+          "const": "finding"
+        },
+        "tool": {
+          "type": "string",
+          "pattern": "^tool:"
+        },
+        "rule_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "message": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/$defs/source"
+        },
+        "severity": {
+          "enum": [
+            "error",
+            "warning",
+            "note",
+            "none"
+          ],
+          "description": "SARIF result level."
+        },
+        "state": {
+          "enum": [
+            "open",
+            "fixed",
+            "deviated"
+          ]
+        },
+        "fingerprint": {
+          "type": "string"
+        }
       },
       "unevaluatedProperties": false
     },
-
     "deviation": {
       "$ref": "#/$defs/entity_base",
-      "required": ["key", "justification", "approved_by", "approved_at", "expires_at"],
+      "required": [
+        "key",
+        "justification",
+        "approved_by",
+        "approved_at",
+        "expires_at"
+      ],
       "properties": {
-        "id": { "pattern": "^dev:" },
-        "kind": { "const": "deviation" },
-        "key": { "$ref": "#/$defs/key" },
-        "justification": { "type": "string", "minLength": 1 },
-        "scope": { "type": "string" },
-        "approved_by": { "type": "string", "pattern": "^person:" },
-        "approved_at": { "$ref": "#/$defs/date_time" },
-        "expires_at": { "type": ["string", "null"], "format": "date", "description": "Null means no expiry; gate rules may forbid that." }
+        "id": {
+          "pattern": "^dev:"
+        },
+        "kind": {
+          "const": "deviation"
+        },
+        "key": {
+          "$ref": "#/$defs/key"
+        },
+        "justification": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scope": {
+          "type": "string"
+        },
+        "approved_by": {
+          "type": "string",
+          "pattern": "^person:"
+        },
+        "approved_at": {
+          "$ref": "#/$defs/date_time"
+        },
+        "expires_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date",
+          "description": "Null means no expiry; gate rules may forbid that."
+        }
       },
       "unevaluatedProperties": false
     },
-
     "review": {
       "$ref": "#/$defs/entity_base",
-      "required": ["author", "approvers", "outcome", "at", "system"],
+      "required": [
+        "author",
+        "approvers",
+        "outcome",
+        "at",
+        "system"
+      ],
       "properties": {
-        "id": { "pattern": "^review:" },
-        "kind": { "const": "review" },
-        "author": { "type": "string", "pattern": "^person:" },
-        "approvers": { "type": "array", "items": { "type": "string", "pattern": "^person:" }, "uniqueItems": true },
-        "outcome": { "enum": ["approved", "changes_requested", "rejected"] },
-        "at": { "$ref": "#/$defs/date_time" },
-        "system": { "enum": ["gitlab", "github", "gerrit", "manual"] },
-        "external_ref": { "type": "string", "description": "e.g. GitLab MR !12" },
-        "section": { "type": "string", "description": "Package section id from the standard data." }
+        "id": {
+          "pattern": "^review:"
+        },
+        "kind": {
+          "const": "review"
+        },
+        "author": {
+          "type": "string",
+          "pattern": "^person:"
+        },
+        "approvers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^person:"
+          },
+          "uniqueItems": true
+        },
+        "outcome": {
+          "enum": [
+            "approved",
+            "changes_requested",
+            "rejected"
+          ]
+        },
+        "at": {
+          "$ref": "#/$defs/date_time"
+        },
+        "system": {
+          "enum": [
+            "gitlab",
+            "github",
+            "gerrit",
+            "manual"
+          ]
+        },
+        "external_ref": {
+          "type": "string",
+          "description": "e.g. GitLab MR !12"
+        },
+        "section": {
+          "type": "string",
+          "description": "Package section id from the standard data."
+        }
       },
       "unevaluatedProperties": false
     },
-
     "tool": {
       "$ref": "#/$defs/entity_base",
-      "required": ["name", "version", "class"],
+      "required": [
+        "name",
+        "version",
+        "class"
+      ],
       "properties": {
-        "id": { "pattern": "^tool:" },
-        "kind": { "const": "tool" },
-        "name": { "type": "string", "minLength": 1 },
-        "version": { "type": "string", "minLength": 1 },
-        "class": { "type": ["string", "null"], "description": "Tool class id from the standard data; null means not yet classified." },
-        "evidence": { "$ref": "#/$defs/artifact_paths" }
+        "id": {
+          "pattern": "^tool:"
+        },
+        "kind": {
+          "const": "tool"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "class": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Tool class id from the standard data; null means not yet classified."
+        },
+        "evidence": {
+          "$ref": "#/$defs/artifact_paths"
+        }
       },
       "unevaluatedProperties": false
     },
-
     "preexisting_element": {
       "$ref": "#/$defs/entity_base",
-      "required": ["name", "version", "route"],
+      "required": [
+        "name",
+        "version",
+        "route"
+      ],
       "properties": {
-        "id": { "pattern": "^pre:" },
-        "kind": { "const": "preexisting_element" },
-        "name": { "type": "string", "minLength": 1 },
-        "version": { "type": "string", "minLength": 1 },
-        "origin": { "type": "string" },
-        "route": { "type": ["string", "null"], "description": "Compliance route id from the standard data; null means not yet routed." },
-        "justification": { "$ref": "#/$defs/artifact_paths" }
+        "id": {
+          "pattern": "^pre:"
+        },
+        "kind": {
+          "const": "preexisting_element"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "origin": {
+          "type": "string"
+        },
+        "route": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Compliance route id from the standard data; null means not yet routed."
+        },
+        "justification": {
+          "$ref": "#/$defs/artifact_paths"
+        }
       },
       "unevaluatedProperties": false
     },
-
     "technique_status": {
       "$ref": "#/$defs/entity_base",
-      "required": ["technique", "status"],
+      "required": [
+        "technique",
+        "status"
+      ],
       "properties": {
-        "id": { "pattern": "^tech:" },
-        "kind": { "const": "technique_status" },
-        "technique": { "type": "string", "description": "Technique id from the standard data." },
-        "status": { "enum": ["applied", "not_applied", "not_applicable"] },
-        "evidence": { "$ref": "#/$defs/artifact_paths" },
-        "justification": { "type": "string" }
+        "id": {
+          "pattern": "^tech:"
+        },
+        "kind": {
+          "const": "technique_status"
+        },
+        "technique": {
+          "type": "string",
+          "description": "Technique id from the standard data."
+        },
+        "status": {
+          "enum": [
+            "applied",
+            "not_applied",
+            "not_applicable"
+          ]
+        },
+        "evidence": {
+          "$ref": "#/$defs/artifact_paths"
+        },
+        "justification": {
+          "type": "string"
+        }
       },
       "unevaluatedProperties": false
     },
-
     "change": {
       "$ref": "#/$defs/entity_base",
-      "required": ["title", "author", "merged_at"],
+      "required": [
+        "title",
+        "author",
+        "merged_at"
+      ],
       "properties": {
-        "id": { "pattern": "^change:" },
-        "kind": { "const": "change" },
-        "title": { "type": "string", "minLength": 1 },
-        "author": { "type": "string", "pattern": "^person:" },
-        "merged_at": { "$ref": "#/$defs/date_time" },
-        "external_ref": { "type": "string" },
-        "impact_judgment": { "type": ["string", "null"], "description": "Human assessment of why the re-verified set is sufficient." }
+        "id": {
+          "pattern": "^change:"
+        },
+        "kind": {
+          "const": "change"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "author": {
+          "type": "string",
+          "pattern": "^person:"
+        },
+        "merged_at": {
+          "$ref": "#/$defs/date_time"
+        },
+        "external_ref": {
+          "type": "string"
+        },
+        "impact_judgment": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Human assessment of why the re-verified set is sufficient."
+        }
       },
       "unevaluatedProperties": false
     },
-
     "person": {
       "$ref": "#/$defs/entity_base",
-      "required": ["name", "roles"],
+      "required": [
+        "name",
+        "roles"
+      ],
       "properties": {
-        "id": { "pattern": "^person:" },
-        "kind": { "const": "person" },
-        "name": { "type": "string", "minLength": 1 },
-        "roles": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
-        "competence_record": { "type": ["string", "null"], "description": "Artifact path." }
+        "id": {
+          "pattern": "^person:"
+        },
+        "kind": {
+          "const": "person"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "competence_record": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Artifact path."
+        }
       },
       "unevaluatedProperties": false
     },
-
     "link": {
       "type": "object",
-      "required": ["type", "from", "to"],
+      "required": [
+        "type",
+        "from",
+        "to"
+      ],
       "properties": {
         "type": {
-          "enum": ["derives_from", "allocated_to", "satisfies", "implements", "verifies", "covers", "justifies", "reviews", "affects", "supersedes"]
+          "enum": [
+            "derives_from",
+            "allocated_to",
+            "satisfies",
+            "implements",
+            "verifies",
+            "covers",
+            "justifies",
+            "reviews",
+            "affects",
+            "supersedes",
+            "mitigates",
+            "leads_to",
+            "located_in"
+          ]
         },
-        "from": { "$ref": "#/$defs/ref" },
-        "to": { "$ref": "#/$defs/ref" },
-        "declared_at": { "$ref": "#/$defs/source" }
+        "from": {
+          "$ref": "#/$defs/ref"
+        },
+        "to": {
+          "$ref": "#/$defs/ref"
+        },
+        "declared_at": {
+          "$ref": "#/$defs/source"
+        }
       },
       "additionalProperties": false
     },
-
     "artifact": {
       "type": "object",
-      "required": ["path", "hash", "media_type", "section"],
+      "required": [
+        "path",
+        "hash",
+        "media_type",
+        "section"
+      ],
       "properties": {
-        "path": { "type": "string", "minLength": 1 },
-        "hash": { "$ref": "#/$defs/hash" },
-        "media_type": { "type": "string" },
-        "section": { "type": "string", "description": "Package section id from the standard data." },
-        "description": { "type": "string" },
-        "produced_by": { "type": "string" }
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "hash": {
+          "$ref": "#/$defs/hash"
+        },
+        "media_type": {
+          "type": "string"
+        },
+        "section": {
+          "type": "string",
+          "description": "Package section id from the standard data."
+        },
+        "description": {
+          "type": "string"
+        },
+        "produced_by": {
+          "type": "string"
+        }
       },
       "additionalProperties": false
+    },
+    "hazard": {
+      "$ref": "#/$defs/entity_base",
+      "required": [
+        "key",
+        "title",
+        "text",
+        "status"
+      ],
+      "properties": {
+        "id": {
+          "pattern": "^haz:"
+        },
+        "kind": {
+          "const": "hazard"
+        },
+        "key": {
+          "$ref": "#/$defs/key"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "severity": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "status": {
+          "enum": [
+            "draft",
+            "approved",
+            "retired"
+          ]
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "cause": {
+      "$ref": "#/$defs/entity_base",
+      "required": [
+        "key",
+        "title",
+        "cause_type",
+        "accepted",
+        "status"
+      ],
+      "properties": {
+        "id": {
+          "pattern": "^cause:"
+        },
+        "kind": {
+          "const": "cause"
+        },
+        "key": {
+          "$ref": "#/$defs/key"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "text": {
+          "type": "string"
+        },
+        "cause_type": {
+          "enum": [
+            "uca",
+            "failure_mode"
+          ]
+        },
+        "accepted": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "required": [
+                "justification",
+                "approved_by",
+                "approved_at"
+              ],
+              "properties": {
+                "justification": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "approved_by": {
+                  "type": "string",
+                  "pattern": "^person:"
+                },
+                "approved_at": {
+                  "$ref": "#/$defs/date_time"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "status": {
+          "enum": [
+            "draft",
+            "approved",
+            "retired"
+          ]
+        }
+      },
+      "unevaluatedProperties": false
     }
   }
 }

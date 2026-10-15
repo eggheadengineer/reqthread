@@ -93,15 +93,17 @@ class _Builder:
             eid = self.keys.get((prefix, key))
             if eid:
                 return eid
-        what = " or ".join({"req": "requirement", "arch": "architecture element", "design": "design element"}[k] for k in kinds)
+        what = " or ".join({"req": "requirement", "arch": "architecture element", "design": "design element",
+                            "haz": "hazard", "cause": "cause"}[k] for k in kinds)
         self.errors.append(f"{where}: unknown {what} {key}")
         return None
 
     # -- stages
     def items(self, cfg):
-        reqs, archs, designs = {}, {}, {}
+        reqs, archs, designs, hazards, causes = {}, {}, {}, {}, {}
         for section_key, suffix, store in (("requirements", ".req.md", reqs), ("architecture", ".arch.md", archs),
-                                           ("design", ".design.md", designs)):
+                                           ("design", ".design.md", designs), ("hazards", ".hazard.md", hazards),
+                                           ("causes", ".cause.md", causes)):
             spec = cfg.get(section_key)
             if not spec:
                 continue
@@ -113,7 +115,7 @@ class _Builder:
                 errs, items = check_item_files(directory, suffix)
                 self.errors += errs
                 for key, item in items.items():
-                    if key in reqs or key in archs or key in designs:
+                    if key in reqs or key in archs or key in designs or key in hazards or key in causes:
                         self.errors.append(f"{item[0]}: id {key} is already used by another item")
                         continue
                     store[key] = item
@@ -144,10 +146,36 @@ class _Builder:
             self.add(e)
             self.keys[("design", key)] = e["id"]
 
+        for key, (f, fm, title, text, _r) in hazards.items():
+            e = {"id": f"haz:{key}", "kind": "hazard", "key": key, "title": title, "text": text,
+                 "severity": fm.get("severity"), "status": fm["status"], "source": {"path": _rel(self.root, f)}}
+            self.add(e)
+            self.keys[("haz", key)] = e["id"]
+        for key, (f, fm, title, text, _r) in causes.items():
+            acc = fm.get("accepted")
+            e = {"id": f"cause:{key}", "kind": "cause", "key": key, "title": title, "cause_type": fm["type"],
+                 "accepted": ({"justification": acc["justification"], "approved_by": f"person:{acc['approved_by']}",
+                               "approved_at": acc["approved_at"]} if acc else None),
+                 "status": fm["status"], "source": {"path": _rel(self.root, f)}}
+            if text:
+                e["text"] = text
+            self.add(e)
+            self.keys[("cause", key)] = e["id"]
+        for key, (f, fm, *_x) in causes.items():
+            where = _rel(self.root, f)
+            for k in fm["hazards"]:
+                to = self.resolve(k, ["haz"], where)
+                if to:
+                    self.link("leads_to", f"cause:{key}", to)
+            if fm.get("component"):
+                to = self.resolve(fm["component"], ["arch"], where)
+                if to:
+                    self.link("located_in", f"cause:{key}", to)
+
         for key, (f, fm, *_x) in reqs.items():
             where = _rel(self.root, f)
             for typ, field_, kinds in (("derives_from", "derives_from", ["req"]), ("allocated_to", "allocated_to", ["arch"]),
-                                       ("supersedes", "supersedes", ["req"])):
+                                       ("supersedes", "supersedes", ["req"]), ("mitigates", "mitigates", ["haz", "cause"])):
                 for k in fm.get(field_, []):
                     to = self.resolve(k, kinds, where)
                     if to:
@@ -382,6 +410,9 @@ class _Builder:
                     "previous_bundle_hash": canonical_hash(previous) if previous else None}
         if tag:
             baseline["tag"] = tag
+        for e in self.entities.values():
+            if e["kind"] == "cause" and e["accepted"] and e["accepted"]["approved_by"] not in self.entities:
+                self.errors.append(f"cause {e['key']}: accepted.approved_by {e['accepted']['approved_by'].removeprefix('person:')!r} is not in people")
         ents = sorted(self.entities.values(), key=lambda e: (KIND_ORDER[e["kind"]], e["id"]))
         links = []
         for typ, frm, to, decl in sorted(self.links, key=lambda l: (l[0], l[1], l[2], l[3] or ())):
@@ -390,7 +421,7 @@ class _Builder:
                 l["declared_at"] = dict(decl)
             links.append(l)
         return {
-            "bundle_format": "0.1.0",
+            "bundle_format": "0.2.0",
             "generator": {"name": GENERATOR, "version": __version__},
             "created_at": self.now,
             "project": {"id": cfg["project"]["id"], "name": cfg["project"]["name"],

@@ -32,7 +32,7 @@ reqthread check -c examples/wb55-ref/reqthread.yaml --html report.html
 ```
 
 `examples/wb55-ref/` is a real reference project — a black-channel heartbeat receiver in C, tested from
-pytest, with real gcov coverage and real flawfinder SARIF. It has two genuine gaps; the report shows them.
+pytest, with real gcov coverage and real flawfinder SARIF. It has three genuine gaps; the report shows them.
 
 ## Annotate code and tests
 
@@ -58,6 +58,7 @@ GoogleTest `TEST`, Unity `test_*`, and pytest tests are recognised.
 | `reqthread check` | build, evaluate gates, optionally ratchet with `--baseline`; write `-o` bundle, `--html`, `--json` | 0 pass · 1 error · 2 gaps |
 | `reqthread build` | build and write a bundle (`--previous` chains hashes) | 0 · 1 |
 | `reqthread report` | render HTML from a bundle | 0 · 1 |
+| `reqthread hazards` | hazard analysis on its own: validate hazard and cause files, print the hazard matrix | 0 · 1 · 2 gaps |
 | `reqthread validate` | validate standard data, requirement files, or a hand-written bundle | 0 · 1 |
 
 ## Gate rules
@@ -67,6 +68,19 @@ GoogleTest `TEST`, Unity `test_*`, and pytest tests are recognised.
 3. Every code unit traces to a requirement or design element, or is marked `@infrastructure` with a reason.
 4. Every test verifying a safety requirement **passed** at baseline and failed nowhere — skipped or never-run doesn't count.
 7. Every static-analysis finding is fixed or covered by an unexpired, approved deviation.
+11. Every hazard is mitigated by at least one requirement, directly or through one of its causes.
+12. Every cause (STPA unsafe control action or FMEA failure mode) is mitigated by a requirement, or its residual risk is formally accepted.
+13. Every requirement that mitigates a hazard is a safety requirement with an integrity level.
+
+## Hazard analysis
+
+Hazards and causes live in the repo as files too, so the trace runs from hazard to cause to requirement to test to CI result. In the reference project, HAZ-001 (machine keeps moving after a stop command) traces through three unsafe control actions to SSR-001..003, and a fourth cause, a stuck-high output driver, has no mitigating requirement. The hazard analysis found a gap the requirements never knew about.
+
+```
+reqthread hazards --hazards hazards/ --causes causes/ --requirements requirements/
+```
+
+That command needs no project config, standard data, or CI output, so a safety engineer can start with hazard analysis alone and add the rest later.
 
 ## CI
 

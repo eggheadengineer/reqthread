@@ -129,6 +129,51 @@ def cmd_report(a):
     return EXIT_OK
 
 
+def cmd_hazards(a):
+    """Hazard analysis on its own: validate hazard/cause files, cross-check keys, print the hazard matrix."""
+    from .formats import check_item_files
+    errors = []
+    _, hazards = check_item_files(a.hazards, ".hazard.md"); errors += _
+    _, causes = check_item_files(a.causes, ".cause.md") if a.causes else ([], {}); errors += _
+    reqs = {}
+    if a.requirements:
+        _, reqs = check_item_files(a.requirements, ".req.md"); errors += _
+    for key, (f, fm, *_r) in causes.items():
+        for hz in fm["hazards"]:
+            if hz not in hazards:
+                errors.append(f"cause file {f}: unknown hazard {hz}")
+    mitigated = {}
+    for key, (f, fm, *_r) in reqs.items():
+        for k in fm.get("mitigates", []):
+            if k not in hazards and k not in causes:
+                errors.append(f"requirement file {f}: mitigates unknown hazard or cause {k}")
+            mitigated.setdefault(k, []).append(key)
+    for e in errors:
+        _err(f"error: {e}")
+    if errors:
+        return EXIT_ERRORS
+    gaps = 0
+    for hk, (f, fm, title, *_r) in sorted(hazards.items()):
+        if fm["status"] == "retired":
+            continue
+        print(f"{hk}  {title}" + (f"  [{fm['severity']}]" if fm.get("severity") else ""))
+        cs = [(ck, c) for ck, c in causes.items() if hk in c[1]["hazards"] and c[1]["status"] != "retired"]
+        for rk in mitigated.get(hk, []):
+            print(f"    (direct)  <- {rk}")
+        for ck, (cf, cfm, ctitle, *_x) in sorted(cs):
+            mits = mitigated.get(ck, [])
+            if mits:
+                print(f"    {ck}  {ctitle}  <- {', '.join(mits)}")
+            elif cfm.get("accepted"):
+                print(f"    {ck}  {ctitle}  (risk accepted: {cfm['accepted']['justification'][:60]})")
+            else:
+                print(f"    {ck}  {ctitle}  !! UNMITIGATED"); gaps += 1
+        if not cs and hk not in mitigated:
+            print("    !! no causes and no direct mitigation"); gaps += 1
+    print(f"{'FAIL' if gaps else 'PASS'}: {len(hazards)} hazard(s), {len(causes)} cause(s), {gaps} unmitigated")
+    return EXIT_GAPS if gaps else EXIT_OK
+
+
 def cmd_validate(a):
     errors, std = [], None
     if a.standard:
@@ -185,6 +230,12 @@ def main(argv=None):
     p.add_argument("--baseline")
     p.add_argument("-o", "--out", default="report.html")
     p.set_defaults(func=cmd_report)
+
+    p = sub.add_parser("hazards", help="hazard analysis on its own: validate hazard/cause files and print the hazard matrix")
+    p.add_argument("--hazards", required=True, help="directory of *.hazard.md files")
+    p.add_argument("--causes", help="directory of *.cause.md files")
+    p.add_argument("--requirements", help="directory of *.req.md files, to show mitigations")
+    p.set_defaults(func=cmd_hazards)
 
     p = sub.add_parser("validate", help="validate format files (standard data, requirement files, a bundle)")
     p.add_argument("--standard")

@@ -10,6 +10,8 @@ standard: ../../standards/iec61508-3.skeleton.yaml
 requirements: { paths: [requirements], section: 02_software_safety_requirements }
 architecture: { paths: [architecture], section: 04_architecture }
 design: { paths: [design], section: 05_detailed_design }
+hazards: { paths: [hazards], section: 02_software_safety_requirements }
+causes: { paths: [causes], section: 02_software_safety_requirements }
 
 sources:
   - { glob: "src/**/*.c", language: c }

@@ -147,6 +147,41 @@ def render(bundle, gaps, new_ids=None, fixed=None, warnings=None):
         h.append(f"<tr><td><code>{_e(_short(u['id']))}</code></td><td>{trace or '—'}</td><td>{stmt}</td><td>{br}</td><td>{note}</td></tr>")
     h.append("</table></div>")
 
+    # Hazards
+    if by_kind["hazard"] or by_kind["cause"]:
+        h.append("<h2>Hazard analysis</h2><div class='wrap'><table><tr><th>Hazard</th><th>Cause</th><th>Mitigated by</th><th>Verified</th></tr>")
+        def req_cell(rid):
+            r = ents[rid]
+            tests = [ents[l["from"]] for l in in_l[rid] if l["type"] == "verifies"]
+            if not tests:
+                return f"<span class='chip'>{_e(r['key'])}</span>", "<span class='bad'>no test</span>"
+            outs = {x["outcome"] for t in tests for x in results[t["id"]]}
+            mark = "<span class='ok'>✓</span>" if "pass" in outs and not outs & {"fail", "error"} else ("<span class='bad'>✗ failing</span>" if outs & {"fail", "error"} else "<span class='warn'>○ not run</span>")
+            return f"<span class='chip'>{_e(r['key'])}</span>", mark
+        for hz in sorted(by_kind["hazard"], key=lambda x: x["key"]):
+            direct = [l["from"] for l in in_l[hz["id"]] if l["type"] == "mitigates"]
+            cs = [ents[l["from"]] for l in in_l[hz["id"]] if l["type"] == "leads_to"]
+            rows_ = []
+            for rid in sorted(direct):
+                chip, mark = req_cell(rid); rows_.append(("<span class='muted'>(direct)</span>", chip, mark))
+            for c in sorted(cs, key=lambda x: x["key"]):
+                mits = sorted(l["from"] for l in in_l[c["id"]] if l["type"] == "mitigates")
+                label = f"<b>{_e(c['key'])}</b> {_e(c['title'])}"
+                if mits:
+                    for rid in mits:
+                        chip, mark = req_cell(rid); rows_.append((label, chip, mark))
+                elif c["accepted"]:
+                    rows_.append((label, f"<span class='muted'>risk accepted: {_e(c['accepted']['justification'])}</span>", "<span class='muted'>—</span>"))
+                else:
+                    rows_.append((label, "<span class='bad'>unmitigated</span>", "<span class='bad'>—</span>"))
+            if not rows_:
+                rows_.append(("<span class='muted'>—</span>", "<span class='bad'>unmitigated</span>", "<span class='bad'>—</span>"))
+            first = True
+            for label, chip, mark in rows_:
+                hcell = f"<td rowspan='{len(rows_)}'><b>{_e(hz['key'])}</b> {_e(hz['title'])}<div class='muted'>{_e(hz.get('severity') or '')}</div></td>" if first else ""
+                h.append(f"<tr>{hcell}<td>{label}</td><td>{chip}</td><td>{mark}</td></tr>"); first = False
+        h.append("</table></div>")
+
     # Findings
     h.append("<h2>Static analysis findings</h2>")
     if by_kind["finding"]:

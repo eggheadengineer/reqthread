@@ -25,6 +25,9 @@ RULES = {
     3: "Every code unit traces to a requirement or design element, or is marked infrastructure.",
     4: "Every test verifying a safety requirement passed at baseline and failed nowhere.",
     7: "Every static-analysis finding is fixed or covered by an unexpired deviation.",
+    11: "Every hazard is mitigated by at least one requirement, directly or through one of its causes.",
+    12: "Every cause is mitigated by a requirement, or its residual risk is formally accepted.",
+    13: "Every requirement that mitigates a hazard or cause is a safety requirement with an integrity level.",
 }
 
 
@@ -103,6 +106,24 @@ def evaluate(bundle):
             live = [d for d in devs if d["expires_at"] is None or dt.date.fromisoformat(d["expires_at"]) >= as_of]
             if not live:
                 gaps.append(Gap(7, f["id"], "deviation", f"{f['rule_id']} at {where} has no unexpired deviation"))
+
+    # Rules 11-13: hazard analysis
+    live = lambda e: e["status"] != "retired"
+    hazards = [h for h in ents("hazard") if live(h)]
+    causes = [c for c in ents("cause") if live(c)]
+    mitigators = lambda eid: [by_id[l["from"]] for l in in_links[eid] if l["type"] == "mitigates" and live(by_id[l["from"]])]
+    cause_hazards = {c["id"]: [l["to"] for l in out_links[c["id"]] if l["type"] == "leads_to"] for c in causes}
+    for h in hazards:
+        direct = mitigators(h["id"])
+        via = [c for c in causes if h["id"] in cause_hazards[c["id"]] and (mitigators(c["id"]) or c["accepted"])]
+        if not direct and not via:
+            gaps.append(Gap(11, h["id"], "unmitigated", f"{h['key']} ({h['title']}) has no mitigating requirement"))
+    for c in causes:
+        if not mitigators(c["id"]) and not c["accepted"]:
+            gaps.append(Gap(12, c["id"], "unmitigated", f"{c['key']} ({c['title']}) has no mitigating requirement and no accepted-risk record"))
+    for r in ents("requirement"):
+        if live(r) and any(l["type"] == "mitigates" for l in out_links[r["id"]]) and not r.get("integrity_level"):
+            gaps.append(Gap(13, r["id"], "integrity", f"{r['key']} mitigates a hazard but has no integrity level"))
 
     return sorted(gaps, key=lambda g: (g.rule, g.subject, g.qualifier))
 

@@ -19,6 +19,7 @@ COMMIT = "a" * 40
 EXPECTED_GAPS = {
     "rule1:req:SSR-003:module",
     "rule4:test:tests/hil/test_link_drop.py::test_link_loss_trips:not-passed",
+    "rule12:cause:FM-001:unmitigated",
 }
 
 
@@ -96,7 +97,7 @@ class Build(unittest.TestCase):
                 '<testsuite timestamp="2026-10-13T19:00:00Z">'
                 '<testcase classname="tests.hil.test_link_drop" name="test_link_loss_trips"/></testsuite>')
             gaps = {g.id for g in evaluate(w.build().bundle)}
-            self.assertEqual(gaps, {"rule1:req:SSR-003:module"})
+            self.assertEqual(gaps, {"rule1:req:SSR-003:module", "rule12:cause:FM-001:unmitigated"})
 
     def test_dangling_annotation_is_a_build_error(self):
         with Workspace() as w:
@@ -169,7 +170,7 @@ class Cli(unittest.TestCase):
             r = cli("check", "-c", str(w.config), "--commit", COMMIT, "-o", str(out / "b.json"),
                     "--html", str(out / "r.html"), "--json", str(out / "g.json"))
             self.assertEqual(r.returncode, 2, r.stderr)
-            self.assertIn("FAIL: 2 gap(s)", r.stdout)
+            self.assertIn("FAIL: 3 gap(s)", r.stdout)
             gaps = json.loads((out / "g.json").read_text())
             self.assertEqual({g["id"] for g in gaps["gaps"]}, EXPECTED_GAPS)
             self.assertTrue((out / "r.html").read_text().startswith("<!doctype html>"))
