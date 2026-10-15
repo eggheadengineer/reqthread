@@ -5,13 +5,18 @@ and sequences heartbeat frames and drops machine-enable 300 ms after the last va
 written to run on the P-NUCLEO-WB55 under Zephyr; for now it builds and tests on a Linux host.
 
 **Everything in `ci-out/` comes from real tool runs** (`./make_fixtures.sh`): gcc `--coverage`,
-pytest driving the C code through ctypes, gcovr, and flawfinder. The only edit is mechanical: the script
+pytest driving the C code through ctypes, gcovr, flawfinder, and
+[faultbench](https://github.com/eggheadengineer/faultbench) injecting faults into the same compiled receiver over a
+virtual CAN FD bus (`tests/fault/`): link loss, two and three lost heartbeats, delayed frames, forged tags, and a
+replayed frame, each checked against the 300 ms fault-tolerant time interval. The only edit is mechanical: the script
 rewrites this checkout's absolute path to `/builds/wb55-ref`, as if the tools had run on a CI runner.
 
 **Three gaps are expected, and all three are true:**
 
-1. **SSR-003 (replay rejection) has no test.** `seq_check` *is* exercised — coverage shows it ran —
-   but no test verifies the requirement. That is the difference between coverage and traceability.
+1. **SSR-003 (replay rejection) has no test traced to it.** `seq_check` *is* exercised: coverage shows it ran,
+   and `tests/fault/test_faults.py::test_replayed_heartbeats_do_not_extend_enable` injects a replay and proves
+   the receiver trips. But that test carries no trace tag, so the requirement has no evidence. That is the
+   difference between coverage and traceability, and the fix is one docstring line.
 2. **The HIL test has only ever been skipped.** The rig driver doesn't exist yet, so SSR-001 is
    verified on the host only. When the rig runs, its `pytest --junitxml` output goes in
    `ci-out/junit-hil.xml` and the config already ingests it.
