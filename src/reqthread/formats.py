@@ -14,7 +14,7 @@ PREFIX = {
     "code_unit": "code", "test_case": "test", "environment": "env", "test_result": "result",
     "coverage_record": "cov", "finding": "finding", "deviation": "dev", "review": "review",
     "tool": "tool", "preexisting_element": "pre", "technique_status": "tech",
-    "change": "change", "person": "person",
+    "change": "change", "person": "person", "hazard": "haz", "cause": "cause",
 }
 
 TRACEABLE = ("requirement", "architecture_element", "design_element", "code_unit", "test_case")
@@ -29,6 +29,9 @@ LINK_PAIRS = {
     "reviews": {("review", k) for k in TRACEABLE + ("change",)},
     "affects": {("change", k) for k in TRACEABLE},
     "supersedes": {("requirement", "requirement")},
+    "mitigates": {("requirement", "hazard"), ("requirement", "cause")},
+    "leads_to": {("cause", "hazard")},
+    "located_in": {("cause", "architecture_element")},
 }
 
 REF_FIELDS = {
@@ -39,6 +42,8 @@ REF_FIELDS = {
     "review": {"author": "person", "approvers": "person"},
     "change": {"author": "person"},
 }
+# nested person reference: cause.accepted.approved_by
+
 
 FRONT_MATTER = re.compile(r"\A---\n(.*?)\n---\n(.*)\Z", re.S)
 _schemas = {}
@@ -181,6 +186,8 @@ ITEM_KINDS = {
     ".req.md": ("requirement.schema.json", "requirement"),
     ".arch.md": ("architecture.schema.json", "architecture element"),
     ".design.md": ("design.schema.json", "design element"),
+    ".hazard.md": ("hazard.schema.json", "hazard"),
+    ".cause.md": ("cause.schema.json", "cause"),
 }
 
 
@@ -198,8 +205,8 @@ def check_item_files(directory, suffix=".req.md"):
         errors += file_errors
         if not title:
             errors.append(f"{what} file {f}: body has no '# ' title")
-        if suffix == ".req.md" and not text:
-            errors.append(f"{what} file {f}: no requirement text after the title")
+        if suffix in (".req.md", ".hazard.md") and not text:
+            errors.append(f"{what} file {f}: no {what} text after the title")
         rid = fm.get("id") if isinstance(fm, dict) else None
         if rid in items:
             errors.append(f"{what} file {f}: duplicate id {rid} (also {items[rid][0]})")
@@ -261,6 +268,12 @@ def check_references(bundle, std=None, std_path=None, root=None):
             for ref in (vals if isinstance(vals, list) else [vals]):
                 if ref is not None and kind_of(ref) != want:
                     errors.append(f"refs: {e['id']}.{field} -> {ref}: expected an existing {want}")
+
+    for e in bundle["entities"]:
+        if e["kind"] == "cause" and e.get("accepted"):
+            ref = e["accepted"]["approved_by"]
+            if kind_of(ref) != "person":
+                errors.append(f"refs: {e['id']}.accepted.approved_by -> {ref}: expected an existing person")
 
     for i, l in enumerate(bundle["links"]):
         fk, tk = kind_of(l["from"]), kind_of(l["to"])

@@ -1,6 +1,6 @@
 # Formats
 
-**Version 0.1.0.** All formats are name-neutral (URN ids; the generator name is data), so the product can be renamed without a migration. Schemas live in `src/reqthread/schema/` and ship inside the package.
+**Version 0.2.0.** All formats are name-neutral (URN ids; the generator name is data), so the product can be renamed without a migration. Schemas live in `src/reqthread/schema/` and ship inside the package.
 
 | Format | Schema | Authored by | Purpose |
 | --- | --- | --- | --- |
@@ -8,6 +8,8 @@
 | Requirement file `*.req.md` | `requirement.schema.json` | the team | One requirement per file, reviewed like code |
 | Architecture file `*.arch.md` | `architecture.schema.json` | the team | One architecture element per file |
 | Design file `*.design.md` | `design.schema.json` | the team | One design element per file |
+| Hazard file `*.hazard.md` | `hazard.schema.json` | the team | One hazard per file: a system condition that can lead to harm |
+| Cause file `*.cause.md` | `cause.schema.json` | the team | One cause per file: an STPA unsafe control action or an FMEA failure mode |
 | Deviation register `deviations.yaml` | `deviations.schema.json` | the team | Approved, expiring justifications for static-analysis findings |
 | Standard data `*.yaml` | `standard-data.schema.json` | the licensee, from their own copy | Integrity levels, sections, test levels, tool classes, routes, techniques, coverage targets |
 | Evidence bundle `bundle.json` | `bundle.schema.json` | generated | One baseline's trace graph, verification records, and artifact manifest |
@@ -32,6 +34,8 @@ standard: ../../standards/iec61508-3.skeleton.yaml      # paths are relative to 
 requirements: { paths: [requirements], section: 02_software_safety_requirements }
 architecture: { paths: [architecture], section: 04_architecture }
 design:       { paths: [design],       section: 05_detailed_design }
+hazards:      { paths: [hazards],      section: 02_software_safety_requirements }
+causes:       { paths: [causes],       section: 02_software_safety_requirements }
 
 sources:
   - { glob: "src/**/*.c", language: c }
@@ -82,6 +86,36 @@ The receiver shall de-energise the machine-enable output within 300 ms of the la
 
 Architecture front matter: `id`, `safety_related`, optional `integrity_level`. Design front matter: `id`, optional `derives_from` (architecture keys) and `satisfies` (requirement keys).
 
+## Hazard analysis
+
+Hazards and causes sit upstream of requirements, so the trace runs hazard to cause to requirement to test to CI result. Requirements take a `mitigates` list of hazard or cause keys; nothing else changes about them.
+
+```markdown
+---
+id: HAZ-001
+severity: serious injury       # free text, or an id from your standard data
+status: approved
+---
+# Machine keeps moving after the operator commands a stop
+
+The operator presses stop, or walks out of range, and the machine-enable output stays asserted.
+```
+
+```markdown
+---
+id: UCA-001
+type: uca                      # uca | failure_mode
+hazards: [HAZ-001]
+component: ARCH-RX             # optional architecture element
+status: approved
+---
+# Receiver keeps enable asserted after the heartbeat stops
+```
+
+A cause with no mitigating requirement needs an `accepted` block (justification, `approved_by` person id, `approved_at`) or it is a gap. Retired hazards and causes are ignored.
+
+**Standalone use.** `reqthread hazards --hazards DIR --causes DIR [--requirements DIR]` validates the files, cross-checks every key, and prints the hazard matrix without a project config, a standard-data file, or CI output. Safety engineers can adopt it before the rest of the toolchain exists.
+
 ## Annotations
 
 | Tag | Valid in | Meaning |
@@ -115,7 +149,7 @@ A finding suppressed in source (SARIF `suppressions`) with no matching deviation
 
 ## Bundle model
 
-Entity kinds and prefixes: requirement `req:`, architecture_element `arch:`, design_element `design:`, code_unit `code:`, test_case `test:`, environment `env:`, test_result `result:`, coverage_record `cov:`, finding `finding:`, deviation `dev:`, review `review:`, tool `tool:`, preexisting_element `pre:`, technique_status `tech:`, change `change:`, person `person:`.
+Entity kinds and prefixes: requirement `req:`, architecture_element `arch:`, design_element `design:`, code_unit `code:`, test_case `test:`, environment `env:`, test_result `result:`, coverage_record `cov:`, finding `finding:`, deviation `dev:`, review `review:`, tool `tool:`, preexisting_element `pre:`, technique_status `tech:`, change `change:`, person `person:`, hazard `haz:`, cause `cause:`.
 
 | Link | From → To |
 | --- | --- |
@@ -129,16 +163,19 @@ Entity kinds and prefixes: requirement `req:`, architecture_element `arch:`, des
 | `reviews` | review → requirement, architecture, design, code, test, or change |
 | `affects` | change → requirement, architecture, design, code, or test |
 | `supersedes` | requirement → requirement |
+| `mitigates` | requirement → hazard or cause |
+| `leads_to` | cause → hazard |
+| `located_in` | cause → architecture_element |
 
 Code units are created for **every** function in the source globs, not only annotated ones — otherwise untraced code would be invisible. A file-level unit (symbol `null`) exists when a file carries `@file` tags; it traces every function in that file for rule 3. Coverage is attributed per function by line range.
 
 ## Gate rules and ratcheting
 
-Rules 1–4 and 7 (see README). Each gap has a stable id, e.g. `rule1:req:SSR-003:module`. `check --baseline previous.json` re-evaluates the baseline bundle and fails only on gaps whose ids are not in it, listing fixed gaps separately.
+Rules 1–4, 7, and 11–13 (see README). Each gap has a stable id, e.g. `rule1:req:SSR-003:module`. `check --baseline previous.json` re-evaluates the baseline bundle and fails only on gaps whose ids are not in it, listing fixed gaps separately.
 
 ## Versioning
 
-`bundle_format` and `data_format` are semver. Minor versions are additive; readers accept any minor of a major they know and reject unknown majors.
+`bundle_format` and `data_format` are semver. Minor versions are additive; readers accept any minor of a major they know and reject unknown majors. Bundle format 0.2.0 added the `hazard` and `cause` entities and the `mitigates`, `leads_to`, and `located_in` links; 0.1.0 bundles still validate.
 
 ## Known limits
 

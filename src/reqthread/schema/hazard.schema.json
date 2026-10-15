@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:evidence-bundle:schema:hazard-file:0.2.0",
+  "title": "Hazard file front matter (*.hazard.md)",
+  "description": "One hazard per file: a system-level condition that can lead to harm. The first H1 is the title; the body is the description.",
+  "type": "object",
+  "required": [
+    "id",
+    "status"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9]*-[A-Z0-9][A-Z0-9._-]*$"
+    },
+    "severity": {
+      "type": "string",
+      "description": "Free text or an id from the standard data's severity scale, if it has one."
+    },
+    "status": {
+      "enum": [
+        "draft",
+        "approved",
+        "retired"
+      ]
+    }
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:evidence-bundle:schema:cause-file:0.2.0",
+  "title": "Cause file front matter (*.cause.md)",
+  "description": "One cause per file: an STPA unsafe control action or an FMEA failure mode that leads to one or more hazards.",
+  "type": "object",
+  "required": [
+    "id",
+    "type",
+    "hazards",
+    "status"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "$ref": "#/$defs/key"
+    },
+    "type": {
+      "enum": [
+        "uca",
+        "failure_mode"
+      ]
+    },
+    "hazards": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/key"
+      },
+      "uniqueItems": true
+    },
+    "component": {
+      "$ref": "#/$defs/key",
+      "description": "Architecture element key where the cause originates."
+    },
+    "accepted": {
+      "type": "object",
+      "description": "Residual-risk acceptance for a cause with no mitigating requirement.",
+      "required": [
+        "justification",
+        "approved_by",
+        "approved_at"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "justification": {
+          "type": "string",
+          "minLength": 1
+        },
+        "approved_by": {
+          "type": "string",
+          "description": "Person id from the config, without the person: prefix."
+        },
+        "approved_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "status": {
+      "enum": [
+        "draft",
+        "approved",
+        "retired"
+      ]
+    }
+  },
+  "$defs": {
+    "key": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9]*-[A-Z0-9][A-Z0-9._-]*$"
+    }
+  }
+}
